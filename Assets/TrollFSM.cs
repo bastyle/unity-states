@@ -3,13 +3,14 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO.Compression;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using static UnityEngine.GraphicsBuffer;
 
 public class TrollFSM : MonoBehaviour
 {
     public enum TrollSate
     {
-        REALIGN_WAYPOINT, SEEK_WAYPOINT, CHASE_ENEMY, FIGHT_ENEMY
+        REALIGN_WAYPOINT, SEEK_WAYPOINT, CHASE_ENEMY, FIGHT_ENEMY, CELEBRATE
     }
 
     public TrollSate currentStSate = TrollSate.REALIGN_WAYPOINT;
@@ -25,8 +26,18 @@ public class TrollFSM : MonoBehaviour
 
     public float maxAngularSpeedInDegPerSec = 60;// degrees per second
     public float maxAngularSpeedInRadPerSec = 60;// degrees per second
-    private float angularSpeedInRadPerFrame; 
+    private float angularSpeedInRadPerFrame;
 
+    public float jumpForce = 0.3f;
+
+    public float celebrateTimer = 0;
+
+    public int secondsToCelebrate;
+
+    public int secondsToDefeatEnemy = 3;
+    public float fightTimer = 0;
+
+    public bool isEnemyDead = false;
 
     // Start is called before the first frame update
     void Start()
@@ -57,6 +68,9 @@ public class TrollFSM : MonoBehaviour
             case TrollSate.FIGHT_ENEMY:
                 FightEnemy();
                 break;
+            case TrollSate.CELEBRATE:
+                Celebrate();
+                break;
             default:
                 //throw new Exception("State does not exist!!");
                 print("current state is invalid: "+currentStSate);
@@ -65,20 +79,56 @@ public class TrollFSM : MonoBehaviour
         }
     }
 
+    private void Celebrate()
+    {
+        print("celebrating...");
+        celebrateTimer += Time.deltaTime;
+        int seconds = (int) celebrateTimer % 60;
+        print("celebrating seconds..."+ seconds);
+        //default (add jump or something)
+        //T8
+        if (seconds >= secondsToCelebrate)
+        {
+            //ChangeState();
+            print("finishing celebration...");
+            SceneManager.LoadScene("SampleScene");
+            celebrateTimer = 0;
+        }
+    }
+
     private void FightEnemy()
     {
         // default
-        //DoFightEnemy();
+        DoFightEnemy();
         // check transitions
         //t5 enemy dead or lost sigth
-        if (EnemyDeadOrLostSight())
+        /*if (EnemyDeadOrLostSight())
         {
             ChangeState(TrollSate.SEEK_WAYPOINT);
+        }*/
+        // t7
+        if (EnemyDead())
+        {
+            ChangeState(TrollSate.CELEBRATE);
         }
         //t6 dist>2
         if (!CheckDistanceLE(2))
         {
+            ChangeState(TrollSate.CHASE_ENEMY);
+        }
+    }
 
+    private void DoFightEnemy()
+    {
+        transform.GetComponent<Rigidbody>().AddForce(Vector3.up* jumpForce);
+        print("fighting...");
+        fightTimer += Time.deltaTime;
+        int seconds = (int)fightTimer % 60;
+        if (seconds >= secondsToDefeatEnemy)
+        {
+            //
+            isEnemyDead = true;
+            fightTimer= 0;
         }
     }
 
@@ -120,45 +170,45 @@ public class TrollFSM : MonoBehaviour
 
     private bool EnemyDead()
     {
-        return false;
+        return isEnemyDead;
     }
 
 
     private bool CheckDistanceLE(float distance)
     {
-        if ((Vector3.Distance(this.transform.position, enemy.transform.position)<= distance))
+        float distAux = (Vector3.Distance(this.transform.position, enemy.transform.position));
+        print("distAux:: "+ distAux);
+        if (distAux <= distance)
         {
+            //print("CheckDistanceLE:: true");
             return true;
         }
-
+        //print("CheckDistanceLE:: false");
         return false;
     }
 
     private void DoChaseEnemy()
     {
-        print("chase enemy");
+        print("chasing enemy...");
+        this.transform.position = Vector3.MoveTowards(this.transform.position, enemy.transform.position, maxSpeed * Time.deltaTime);
     }
 
     private void SeekWaypoint()
     {
-        
         // formalize unit vector and the cosine of the angle 
-
         // default
         DoSeekWaypoint();
         // check transitions
-
         // T4
         if (WaypointReached())
         {
-            print("WaypointReached");
+            //print("WaypointReached");
             ChangeState(TrollSate.REALIGN_WAYPOINT);
         }
-
         // T2
         if (SeeEnemy())
         {
-            print("changing state to chase Enemy....");
+            //print("changing state to chase Enemy....");
             ChangeState(TrollSate.CHASE_ENEMY);
         }
     }
@@ -184,7 +234,6 @@ public class TrollFSM : MonoBehaviour
 
     private void DoSeekWaypoint()
     {
-        //throw new NotImplementedException();
         this.transform.position = Vector3.MoveTowards(this.transform.position, waypoints[currentWaypointIndex].position,maxSpeed*Time.deltaTime);
     }
 
@@ -193,7 +242,6 @@ public class TrollFSM : MonoBehaviour
         print("RealignWaypoint");
         // default
         DoRealign();
-
         // checking transitions
         // T1 aligned?
         if (IsAligned())
@@ -222,7 +270,7 @@ public class TrollFSM : MonoBehaviour
 
     private bool IsAligned()
     {
-        print("IsAligned");
+        //print("IsAligned");
         int i1 = (currentWaypointIndex + 1) % waypoints.Length;
         //print("IsAligned i1: "+i1);//
         Vector3 headindToNextWaypointWP = waypoints[i1].position - this.transform.position;
@@ -246,7 +294,7 @@ public class TrollFSM : MonoBehaviour
 
     private void DoRealign()
     {
-        print("DoRealign");
+        print("DoRealign ...");
         int i1 = (currentWaypointIndex + 1) % waypoints.Length;
         //print("DoRealign i1: "+i1);
         Vector3 headindToNextWaypointWP = waypoints[i1].position-this.transform.position;
