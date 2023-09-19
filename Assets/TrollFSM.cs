@@ -120,7 +120,7 @@ public class TrollFSM : MonoBehaviour
 
     private bool EnemyDead()
     {
-        throw new NotImplementedException();
+        return false;
     }
 
 
@@ -136,7 +136,7 @@ public class TrollFSM : MonoBehaviour
 
     private void DoChaseEnemy()
     {
-        throw new NotImplementedException();
+        print("chase enemy");
     }
 
     private void SeekWaypoint()
@@ -156,11 +156,11 @@ public class TrollFSM : MonoBehaviour
         }
 
         // T2
-        /*if (SeeEnemy())
+        if (SeeEnemy())
         {
-            print("SeeEnemy");
+            print("changing state to chase Enemy....");
             ChangeState(TrollSate.CHASE_ENEMY);
-        }*/
+        }
     }
 
     private bool SeeEnemy()
@@ -198,9 +198,8 @@ public class TrollFSM : MonoBehaviour
         // T1 aligned?
         if (IsAligned())
         {
-            // 
-            print("currentWaypointIndex ::: "+ currentWaypointIndex);
-            print("waypoints.Length:: "+ waypoints.Length);
+            //print("currentWaypointIndex ::: "+ currentWaypointIndex);
+            //print("waypoints.Length:: "+ waypoints.Length);
             //currentWaypointIndex = (currentWaypointIndex == waypoints.Length - 1) ? 0 : currentWaypointIndex++;
             if (currentWaypointIndex < waypoints.Length-1)
             {
@@ -210,11 +209,7 @@ public class TrollFSM : MonoBehaviour
             {
                 currentWaypointIndex = 0;
             }
-
-            
-
-            print("currentWaypointIndex update::: " + currentWaypointIndex);
-            //currentWaypointIndex++;
+            //print("currentWaypointIndex update::: " + currentWaypointIndex);
             ChangeState(TrollSate.SEEK_WAYPOINT);
         }
 
@@ -229,7 +224,7 @@ public class TrollFSM : MonoBehaviour
     {
         print("IsAligned");
         int i1 = (currentWaypointIndex + 1) % waypoints.Length;
-        print("IsAligned i1: "+i1);//
+        //print("IsAligned i1: "+i1);//
         Vector3 headindToNextWaypointWP = waypoints[i1].position - this.transform.position;
         //Vector3 headindToNextWaypointWP = waypoints[i1].forward - this.transform.position;
         headindToNextWaypointWP.Normalize();
@@ -239,13 +234,13 @@ public class TrollFSM : MonoBehaviour
             if ( distAux < float.Epsilon)
          */
         float distAux = Vector3.Dot(headindToNextWaypointWP, this.transform.forward);
-        print("distAux:: " + distAux);
+        //print("distAux:: " + distAux);
         if (Math.Abs(distAux - 1f) < 0.1f)
         {
-            print("true..........");
+            //print("true..........");
             return true;
         }
-        print("false..........");
+        //print("false..........");
         return false;
     }
 
@@ -253,7 +248,7 @@ public class TrollFSM : MonoBehaviour
     {
         print("DoRealign");
         int i1 = (currentWaypointIndex + 1) % waypoints.Length;
-        print("DoRealign i1: "+i1);
+        //print("DoRealign i1: "+i1);
         Vector3 headindToNextWaypointWP = waypoints[i1].position-this.transform.position;
         headindToNextWaypointWP.Normalize();
         
@@ -261,7 +256,7 @@ public class TrollFSM : MonoBehaviour
 
         Vector3 targetDirection = waypoints[i1].position - transform.position;
 
-        print("DoRealign target direction maxAngularSpeedInRadPerFrame: " + maxAngularSpeedInRadPerFrame); 
+        //print("DoRealign target direction maxAngularSpeedInRadPerFrame: " + maxAngularSpeedInRadPerFrame); 
 
         //Vector3.RotateTowards(this.transform.forward, headindToNextWaypointWP,
           //  maxAngularSpeedInRadPerFrame, 0);
@@ -285,4 +280,16 @@ public class TrollFSM : MonoBehaviour
         Gizmos.color = Color.red;
         //Gizmos.DrawLineList
     }*/
+
+    void OnDrawGizmos()
+    {
+        // Draw a yellow sphere at the transform's position
+        Gizmos.color = Color.yellow;
+        //Gizmos.DrawLine(transform.position, waypoints[currentWaypointIndex].transform.position);
+        for (int i = 0; i < waypoints.Length; i++)
+        {
+            int i1 = (i + 1) % waypoints.Length;
+            Gizmos.DrawLine(waypoints[i].transform.position, waypoints[i1].transform.position);
+        }
+    }
 }
